@@ -61,6 +61,11 @@ class UserGenPage extends Component {
         method: 'POST',
         headers: {'Content-Type':'application/json', 'X-CSRFToken': getCookie('csrftoken')},
         body: JSON.stringify({
+            // START TRANSITION PERIOD: ALLOW LOGIN WITH V1 TOKENS
+            token: token,
+            // END TRANSITION PERIOD. DELETE TO FORBID V1 TOKENS
+            // WITH V2 TOKENS, THE TOKEN SHOULD NEVER BE SENT TO THE SERVER
+            // DURING THE TRANSITION PERIOD. USERS CANNOT VERIFY IF THEIR PRIVACY IS COMPROMISED
             token_sha256: sha256(token),
             public_key: key.publicKeyArmored,
             encrypted_private_key: key.encryptedPrivateKeyArmored,

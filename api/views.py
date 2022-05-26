@@ -609,6 +609,8 @@ class UserView(APIView):
 
         Response with Avatar, Nickname, pubKey, privKey.
         """
+
+
         context = {}
         serializer = self.serializer_class(data=request.data)
 
@@ -629,6 +631,43 @@ class UserView(APIView):
                     "bad_request"] = f"You are already logged in as {request.user} and have an active order"
                 return Response(context, status.HTTP_400_BAD_REQUEST)
 
+### START TRANSITION PERIOD CODE. TO BE REMOVED
+        ## ALLOW LOGIN FOR OLD TOKENS
+
+        token = serializer.data.get("token")
+        if token:       
+                
+            value, counts = np.unique(list(token), return_counts=True)
+            shannon_entropy = entropy(counts, base=62)
+            bits_entropy = log2(len(value)**len(token))
+
+            # Hash the token, only 1 iteration.
+            hash = hashlib.sha256(str.encode(token)).hexdigest()
+
+            # Generate nickname deterministically
+            nickname = self.NickGen.short_from_SHA256(hash, max_length=18)[0]
+            context["nickname"] = nickname
+            
+            # Payload
+            context = {
+                "token_shannon_entropy": shannon_entropy,
+                "token_bits_entropy": bits_entropy,
+            }
+
+            # Do not generate a new user for the old method! Only allow login.
+            if len(User.objects.filter(username=nickname)) == 1:
+                user = authenticate(request, username=nickname, password=token)
+                if user is not None:
+                    login(request, user)
+                    # Sends the welcome back message, only if created +3 mins ago
+                    if request.user.date_joined < (timezone.now() -
+                                                timedelta(minutes=3)):
+                        context["found"] = "We found your Robot avatar. Welcome back!"
+                    return Response(context, status=status.HTTP_202_ACCEPTED)
+        
+        ## END TRANSITION PERIOD TOKEN. REMOVE ABOVE
+        #########
+        
         # The new way. The token is never sent. Only its SHA256
         token_sha256 = serializer.data.get("token_sha256")
         public_key = serializer.data.get("public_key")

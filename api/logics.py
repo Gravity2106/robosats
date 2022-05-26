@@ -71,6 +71,18 @@ class Logics:
                 queryset[0],
             )
 
+        # If user does not have a public key, he is using a token V1. These are deprecated
+        # Not allowed to create new order with old robot credentials.
+        if not user.profile.public_key:
+            return (
+                False,
+                {
+                    "bad_request":
+                    "RoboSats has upgraded the robot privacy model. Robots generated with old tokens should not be used anymore. To participate in an order you can generate a new robot avatar right now from the homepage."
+                },
+                order,
+            )
+
         # Edge case when the user is in an order that is failing payment and he is the buyer
         queryset = Order.objects.filter(Q(maker=user) | Q(taker=user),
                                         status__in=[Order.Status.FAI,Order.Status.PAY])
