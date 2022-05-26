@@ -622,25 +622,27 @@ class UserView(APIView):
         # If an existing user opens the main page by mistake, we do not want it to create a new nickname/profile for him
         if request.user.is_authenticated:
             context = {"nickname": request.user.username}
-            not_participant, _, _ = Logics.validate_already_maker_or_taker(
+            not_participant, _, order = Logics.validate_already_maker_or_taker(
                 request.user)
 
             # Does not allow this 'mistake' if an active order
-            if not not_participant:
+            if not not_participant and order:
                 context[
                     "bad_request"] = f"You are already logged in as {request.user} and have an active order"
                 return Response(context, status.HTTP_400_BAD_REQUEST)
 
-### START TRANSITION PERIOD CODE. TO BE REMOVED
+        ### START TRANSITION PERIOD CODE. TO BE REMOVED
         ## ALLOW LOGIN FOR OLD TOKENS
 
         token = serializer.data.get("token")
+        print("tokn!!")
+        print(token)
         if token:       
                 
             value, counts = np.unique(list(token), return_counts=True)
             shannon_entropy = entropy(counts, base=62)
             bits_entropy = log2(len(value)**len(token))
-
+            print('shannon_entropy :'+str(shannon_entropy) )
             # Hash the token, only 1 iteration.
             hash = hashlib.sha256(str.encode(token)).hexdigest()
 
@@ -662,12 +664,12 @@ class UserView(APIView):
                     # Sends the welcome back message, only if created +3 mins ago
                     if request.user.date_joined < (timezone.now() -
                                                 timedelta(minutes=3)):
-                        context["found"] = "We found your Robot avatar. Welcome back!"
+                        context["found"] = "Welcome back! but... YOU SHOULD GENERATE A NEW ROBOT. THIS ROBOT USES a V1 TOKEN AND IS DEPRECATED, IT CANNOT PARTICIPATE IN NEW ORDERS"
                     return Response(context, status=status.HTTP_202_ACCEPTED)
         
         ## END TRANSITION PERIOD TOKEN. REMOVE ABOVE
         #########
-        
+
         # The new way. The token is never sent. Only its SHA256
         token_sha256 = serializer.data.get("token_sha256")
         public_key = serializer.data.get("public_key")
@@ -910,12 +912,13 @@ class InfoView(ListAPIView):
             context["earned_rewards"] = request.user.profile.earned_rewards
             has_no_active_order, _, order = Logics.validate_already_maker_or_taker(
                 request.user)
-            if not has_no_active_order:
-                context["active_order_id"] = order.id
-            else:
-                last_order = Order.objects.filter(Q(maker=request.user) | Q(taker=request.user)).last()
-                if last_order:
-                    context["last_order_id"] = last_order.id
+            if order:
+                if not has_no_active_order:
+                    context["active_order_id"] = order.id
+                else:
+                    last_order = Order.objects.filter(Q(maker=request.user) | Q(taker=request.user)).last()
+                    if last_order:
+                        context["last_order_id"] = last_order.id
 
         return Response(context, status.HTTP_200_OK)
 

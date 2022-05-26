@@ -201,7 +201,7 @@ class UserGenPage extends Component {
             this.state.found ?
               <Grid item xs={12} align="center">
                 <Typography variant="subtitle2" color='primary'>
-                  {this.state.found ? t("A robot avatar was found, welcome back!"):null}<br/>
+                  {this.state.found ? t(this.state.found) : null}<br/>
                 </Typography>
               </Grid>
              :

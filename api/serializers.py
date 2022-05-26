@@ -82,6 +82,17 @@ class UpdateOrderSerializer(serializers.Serializer):
 
 class UserGenSerializer(serializers.Serializer):
     # Mandatory fields
+    
+    ########################################
+    #### ONLY DURING TRANSITION PERIOD. DEPRECATED!!!
+    token = serializers.CharField(max_length=64,
+                                    allow_null=False,
+                                    allow_blank=False,
+                                    required=True,
+                                    help_text="SHA256 of user secret")
+    #### ONLY DURING TRANSITION PERIOD. DEPRECATED!!!
+    ########################################
+
     token_sha256 = serializers.CharField(max_length=64,
                                     allow_null=False,
                                     allow_blank=False,

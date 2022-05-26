@@ -80,7 +80,7 @@ class Logics:
                     "bad_request":
                     "RoboSats has upgraded the robot privacy model. Robots generated with old tokens should not be used anymore. To participate in an order you can generate a new robot avatar right now from the homepage."
                 },
-                order,
+                None,
             )
 
         # Edge case when the user is in an order that is failing payment and he is the buyer
